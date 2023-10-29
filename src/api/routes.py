@@ -5,7 +5,7 @@ from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User
 from api.utils import generate_sitemap, APIException
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import create_access_token, get_jti, create_refresh_token
 
 api = Blueprint('api', __name__)
 #Agregar al boilerplate
@@ -29,6 +29,7 @@ def createUser():
     secure_password = bcrypt.generate_password_hash((data["password"]), 10).decode("utf-8")
     new_user.email = data["email"]
     new_user.password = secure_password
+    new_user.name = data["name"]
     new_user.is_active = True
     db.session.add(new_user)
     db.session.commit()
@@ -39,9 +40,14 @@ def login_user():
     data = request.get_json(force=True)
     email = request.json.get("email", None)
     password = request.json.get("password", None)
-    user = User.query.filter_by(email=email, password=password).first()
+    user = User.query.filter_by(email=email).first()
     if user is None:
+        print("No user found")
         return jsonify({"msg": "Incorrect user or password"}), 401
-    
-    token = create_access_token(identity = data["id"], additional_claims={"role":"admin"})
-    return jsonify({"msg": "Login successful!", "token":token}),200
+    if not bcrypt.check_password_hash(user.password,password):
+        print("Wrong password")
+        return jsonify({"msg":"Incorrect user or password"}), 401
+    access_token = create_access_token(identity = user.id, additional_claims={"role":"admin"})
+    access_jti = get_jti(access_token)
+    refresh_token = create_refresh_token(identity=user.id, additional_claims={"accessToken":access_jti})
+    return jsonify({"msg": "Login successful!", "token":access_token, "refresh_token": refresh_token, "user":User.serialize(user)}),200
