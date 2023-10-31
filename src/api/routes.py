@@ -5,22 +5,12 @@ from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User
 from api.utils import generate_sitemap, APIException
 from flask_bcrypt import Bcrypt
-from flask_jwt_extended import create_access_token, get_jti, create_refresh_token
+from flask_jwt_extended import create_access_token, get_jti, create_refresh_token, jwt_required, get_jwt, get_jwt_identity
 
 api = Blueprint('api', __name__)
 #Agregar al boilerplate
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
-
-@api.route('/hello', methods=['POST', 'GET'])
-def handle_hello():
-
-    response_body = {
-        "message": "Hello! I'm a message that came from the backend, check the network tab on the google inspector and you will see the GET request"
-    }
-
-    return jsonify(response_body), 200
-
 
 @api.route('/signup', methods=['POST'])
 def createUser():
@@ -37,7 +27,7 @@ def createUser():
 
 @api.route('/login', methods=["POST"])
 def login_user():
-    data = request.get_json(force=True)
+    #data = request.get_json(force=True)
     email = request.json.get("email", None)
     password = request.json.get("password", None)
     user = User.query.filter_by(email=email).first()
@@ -51,3 +41,15 @@ def login_user():
     access_jti = get_jti(access_token)
     refresh_token = create_refresh_token(identity=user.id, additional_claims={"accessToken":access_jti})
     return jsonify({"msg": "Login successful!", "token":access_token, "refresh_token": refresh_token, "user":User.serialize(user)}),200
+
+@api.route('/private', methods=["POST"])
+@jwt_required()
+def hello_protected():
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    user = User.query.get(user_id)
+    response = {
+        "id":user_id,
+        "claims":claims,
+    }
+    return jsonify(response), 200
