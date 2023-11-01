@@ -1,4 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 db = SQLAlchemy()
 
@@ -19,3 +20,7 @@ class User(db.Model):
             "name": self.name
             # do not serialize the password, its a security breach
         }
+class TokenBlockedList(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String, unique=True, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False , default=datetime.utcnow)

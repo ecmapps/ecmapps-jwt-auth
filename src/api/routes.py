@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User
+from api.models import db, User, TokenBlockedList
 from api.utils import generate_sitemap, APIException
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, get_jti, create_refresh_token, jwt_required, get_jwt, get_jwt_identity
@@ -30,7 +30,6 @@ def createUser():
 
 @api.route('/login', methods=["POST"])
 def login_user():
-    #data = request.get_json(force=True)
     email = request.json.get("email", None)
     password = request.json.get("password", None)
     user = User.query.filter_by(email=email).first()
@@ -45,12 +44,21 @@ def login_user():
     refresh_token = create_refresh_token(identity=user.id, additional_claims={"accessToken":access_jti})
     return jsonify({"msg": "Login successful!", "token":access_token, "refresh_token": refresh_token, "user":User.serialize(user)}),200
 
+@api.route('/logout', methods=["POST"])
+@jwt_required()
+def user_logout():
+    jti = get_jwt()["jti"]
+    tokenBlocked = TokenBlockedList(token=jti)
+    db.session.add(tokenBlocked)
+    db.session.commit()
+    return jsonify({"msg":"Token blocked: "+ jti}), 200
+
 @api.route('/private', methods=["POST"])
 @jwt_required()
 def hello_protected():
     user_id = get_jwt_identity()
     claims = get_jwt()
-    user = User.query.get(user_id)
+    #user = User.query.get(user_id)
     response = {
         "id":user_id,
         "claims":claims,

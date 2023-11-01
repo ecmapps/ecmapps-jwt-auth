@@ -1,19 +1,20 @@
-import React, {useContext} from "react";
+import React, {useContext, useEffect} from "react";
 import { Context } from "../store/appContext";
 import { useNavigate } from "react-router-dom"
 
 export const SignUp = () => {
     const {store, actions} = useContext(Context);
-    const navigate = useNavigate()
-
-    const handleChange = (e) =>{
-        e.preventDefault();
-        console.log(e.target.value)
-    }
+    const navigate = useNavigate();
+    useEffect(()=>{
+        let token = sessionStorage.getItem("access_token");
+        if(token!==null){
+            navigate("/private");
+        }
+    },[])
     async function handleSubmit (e) {
         e.preventDefault();
         if(e.target.password.value.length < 8){
-            alert("The password needs to be at least 8 characters long");
+            alert("The password has to be at least 8 characters long");
             return;
         }
         const response = await actions.signUp(e.target.username.value, e.target.email.value, e.target.password.value);
@@ -24,7 +25,6 @@ export const SignUp = () => {
             alert(response.data.msg);
         }
     }
-
     return (
         <div className="mt-2 container">
             <form onSubmit={(event)=>handleSubmit(event)} className="d-flex flex-column flex-nowrap align-items-center">
@@ -41,7 +41,7 @@ export const SignUp = () => {
                 </div>
                 <div className="mb-3 col-12 col-md-6 col-lg-4">
                     <label htmlFor="passwordInput" className="form-label">Password</label>
-                    <input type="password" name="password" className="form-control" id="passwordInput" aria-describedby="passwordHelp" onChange={handleChange} required></input>
+                    <input type="password" name="password" className="form-control" id="passwordInput" aria-describedby="passwordHelp" required></input>
                     <div id="passwordHelp" className="form-text">Enter at least 8 characters</div>
                 </div>
                 <div className="mb-3 col-12 col-md-6 col-lg-4">

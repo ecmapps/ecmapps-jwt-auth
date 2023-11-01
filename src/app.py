@@ -8,7 +8,7 @@ from flask_swagger import swagger
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from api.utils import APIException, generate_sitemap
-from api.models import db, User
+from api.models import db, User, TokenBlockedList
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -23,7 +23,17 @@ app.url_map.strict_slashes = False
 #JWT
 jwt = JWTManager(app)
 app.config["JWT_SECRET_KEY"] = os.getenv("FLASK_APP_KEY")
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 5
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = 50
+#Verify blocked tokens
+@jwt.token_in_blocklist_loader
+def check_token_blocklist(jwt_header ,jwt_payload)->bool:
+    jti=jwt_payload["jti"]
+    token = TokenBlockedList.query.filter_by(token=jti).first()
+    if token is not None:
+        return True
+    #if request.path=="/api/private":
+    #    return True
+    return False
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")
