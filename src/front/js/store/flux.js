@@ -25,16 +25,14 @@ const getState = ({ getStore, getActions, setStore }) => {
 				return {code: resp.status, data};
 			},
 			signUp: async (user_name, email, password) => {
+				console.log("flux signup")
 				const { apiFetch } = getActions();
 				const response = await apiFetch("/signup", "POST", {
 					user_name,
 					email,
 					password
 				});
-				if (response.code == 201){
-					return response;
-				}
-				navigate("/login")
+				return response
 			}
 		}
 	};

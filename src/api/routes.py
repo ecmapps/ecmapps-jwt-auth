@@ -15,11 +15,14 @@ bcrypt = Bcrypt(app)
 @api.route('/signup', methods=['POST'])
 def createUser():
     data = request.get_json(force=True)
+    existing_user = User.query.filter_by(email=data["email"]).first()
+    if existing_user is not None:
+        return jsonify({"msg":"Email already registered"}), 401
     new_user=User()
     secure_password = bcrypt.generate_password_hash((data["password"]), 10).decode("utf-8")
     new_user.email = data["email"]
     new_user.password = secure_password
-    new_user.name = data["name"]
+    new_user.name = data["user_name"]
     new_user.is_active = True
     db.session.add(new_user)
     db.session.commit()
