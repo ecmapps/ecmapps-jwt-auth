@@ -4,7 +4,7 @@
 services:
     - type: web # valid values: https://render.com/docs/yaml-spec#type
       region: ohio
-      name: sample-service-name
+      name: JWT Auth
       env: python # valid values: https://render.com/docs/yaml-spec#environment
       buildCommand: "./render_build.sh"
       startCommand: "gunicorn wsgi --chdir ./src/"
@@ -16,9 +16,9 @@ services:
           - key: FLASK_APP # Imported from Heroku app
             value: src/app.py
           - key: FLASK_DEBUG # Imported from Heroku app
-            value: 0
+            value: 1
           - key: FLASK_APP_KEY # Imported from Heroku app
-            value: "any key works"
+            value: "afaliwueflaunwbwarivbaweiuvnaweufnfjawefinrp9fawefalerijbneirug"
           - key: PYTHON_VERSION
             value: 3.10.6
           - key: DATABASE_URL # Render PostgreSQL database
